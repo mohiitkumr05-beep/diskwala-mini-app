@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DiskWala Video Downloader</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #08060d;
+      color: #fff;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(112, 52, 255, .28), transparent 32%),
+        radial-gradient(circle at 90% 20%, rgba(255, 45, 166, .20), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(0, 214, 255, .13), transparent 35%),
+        #08060d;
+    }
+
+    .app {
+      width: min(100%, 520px);
+      min-height: 100vh;
+      margin: auto;
+      padding: 20px 16px 30px;
+      position: relative;
+    }
+
+    .glow {
+      position: fixed;
+      width: 230px;
+      height: 230px;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: .16;
+      pointer-events: none;
+    }
+
+    .glow.one { background: #7c3cff; top: 80px; left: -90px; }
+    .glow.two { background: #ff2fa4; top: 330px; right: -100px; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 4px 4px 20px;
+    }
+
+    .logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #7c3cff, #ff2fa4 55%, #00d9ff);
+      box-shadow: 0 8px 30px rgba(145, 52, 255, .38);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: .2px;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: #aaa4b8;
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 5px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 15px;
+      background: rgba(255,255,255,.045);
+      backdrop-filter: blur(14px);
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px;
+      color: #aaa5b4;
+      background: transparent;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, #7138ff, #d52fff);
+      box-shadow: 0 6px 22px rgba(119, 47, 255, .28);
+    }
+
+    .hero {
+      text-align: center;
+      margin: 10px 0 23px;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: clamp(28px, 8vw, 40px);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(90deg, #9a67ff, #ff4bb3 52%, #36dfff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      margin: 11px auto 0;
+      max-width: 360px;
+      color: #aaa5b4;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      padding: 15px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(18, 14, 27, .72);
+      box-shadow: 0 18px 50px rgba(0,0,0,.28);
+      backdrop-filter: blur(18px);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .url-input {
+      width: 100%;
+      height: 72px;
+      resize: none;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+      outline: none;
+      padding: 17px 16px;
+      background: rgba(255,255,255,.055);
+      color: #fff;
+      font-size: 15px;
+      line-height: 1.35;
+      transition: .2s;
+    }
+
+    .url-input::placeholder { color: #777281; }
+
+    .url-input:focus {
+      border-color: rgba(169, 102, 255, .8);
+      box-shadow: 0 0 0 3px rgba(132, 62, 255, .12);
+    }
+
+    .download-btn {
+      width: 100%;
+      height: 58px;
+      margin-top: 11px;
+      border: 0;
+      border-radius: 17px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      background: linear-gradient(100deg, #7138ff, #d32eff, #ff3e9d);
+      box-shadow: 0 10px 30px rgba(164, 43, 255, .28);
+      transition: transform .15s, opacity .15s;
+    }
+
+    .download-btn:active { transform: scale(.98); }
+    .download-btn:disabled { opacity: .55; }
+
+    .status {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 13px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #d9d4df;
+      background: rgba(255,255,255,.05);
+    }
+
+    .status.show { display: block; }
+    .status.error {
+      color: #ffb7ca;
+      border: 1px solid rgba(255, 74, 130, .18);
+    }
+    .status.success {
+      color: #bfffe9;
+      border: 1px solid rgba(42, 255, 184, .16);
+    }
+
+    .section-title {
+      margin: 25px 3px 11px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #aaa5b4;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+
+    .service {
+      min-height: 56px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      background: linear-gradient(135deg, rgba(111,55,255,.30), rgba(255,44,164,.17));
+      box-shadow: inset 0 1px rgba(255,255,255,.05);
+    }
+
+    .service:nth-child(2) { background: linear-gradient(135deg, rgba(0,180,255,.25), rgba(111,55,255,.22)); }
+    .service:nth-child(3) { background: linear-gradient(135deg, rgba(255,75,130,.24), rgba(255,150,45,.15)); }
+    .service:nth-child(4) { background: linear-gradient(135deg, rgba(0,215,190,.23), rgba(78,90,255,.20)); }
+
+    .footer {
+      text-align: center;
+      color: #686372;
+      font-size: 11px;
+      margin-top: 25px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      margin-right: 7px;
+      vertical-align: -3px;
+      border: 2px solid rgba(255,255,255,.28);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body>
+  <div class="glow one"></div>
+  <div class="glow two"></div>
+
+  <main class="app">
+    <header class="brand">
+      <div class="logo">↓</div>
+      <div>
+        <h1>DiskWala</h1>
+        <p>Fast • Simple • Powerful</p>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="diskwala">DiskWala</button>
+      <button class="tab" data-tab="terabox">TeraBox</button>
+    </nav>
+
+    <section class="hero">
+      <h2>DiskWala Video<br>Downloader</h2>
+      <p>Paste your supported video link below and download it quickly and easily.</p>
+    </section>
+
+    <section class="panel">
+      <div class="input-wrap">
+        <textarea id="urlInput" class="url-input"
+          placeholder="Enter DiskWala Link"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"></textarea>
+      </div>
+
+      <button id="downloadBtn" class="download-btn">⬇ Download Video</button>
+
+      <div id="status" class="status"></div>
+    </section>
+
+    <div class="section-title">More Downloaders</div>
+
+    <section class="services">
+      <button class="service" data-placeholder="TeraBox">☁️ TeraBox</button>
+      <button class="service" data-placeholder="DropGalaxy">⚡ DropGalaxy</button>
+      <button class="service" data-placeholder="Vidbunker">🎬 Vidbunker</button>
+      <button class="service" data-placeholder="Flezen">🚀 Flezen</button>
+    </section>
+
+    <div class="footer">DiskWala Video Downloader • Use links you are authorized to download.</div>
+  </main>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const BACKEND_URL = "https://diskwala-mini-app.onrender.com";
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.setHeaderColor("#08060d");
+        tg.setBackgroundColor("#08060d");
+      } catch (e) {}
+    }
+
+    const input = document.getElementById("urlInput");
+    const button = document.getElementById("downloadBtn");
+    const status = document.getElementById("status");
+
+    function showStatus(message, type = "") {
+      status.className = "status show " + type;
+      status.innerHTML = message;
+    }
+
+    function isValidUrl(value) {
+      try {
+        const u = new URL(value);
+        return u.protocol === "http:" || u.protocol === "https:";
+      } catch {
+        return false;
+      }
+    }
+
+    async function downloadVideo() {
+      const url = input.value.trim();
+
+      if (!url) {
+        showStatus("⚠️ Please paste a video link first.", "error");
+        input.focus();
+        return;
+      }
+
+      if (!isValidUrl(url)) {
+        showStatus("⚠️ Please enter a valid http:// or https:// link.", "error");
+        input.focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner"></span>Processing...';
+      showStatus("Connecting to DiskWala backend…");
+
+      try {
+        const response = await fetch(BACKEND_URL + "/api/download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "The server could not process this link.");
+        }
+
+        showStatus(
+          "✅ " + (data.message || "Link received successfully."),
+          "success"
+        );
+      } catch (error) {
+        console.error(error);
+        showStatus(
+          "❌ Could not connect to the downloader server. Please try again.",
+          "error"
+        );
+      } finally {
+        button.disabled = false;
+        button.innerHTML = "⬇ Download Video";
+      }
+    }
+
+    button.addEventListener("click", downloadVideo);
+
+    input.addEventListener("keydown", function (event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        downloadVideo();
+      }
+    });
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        const type = tab.dataset.tab;
+        input.placeholder = type === "terabox"
+          ? "Enter TeraBox Link"
+          : "Enter DiskWala Link";
+
+        showStatus("");
+        status.className = "status";
+      });
+    });
+
+    document.querySelectorAll(".service").forEach(service => {
+      service.addEventListener("click", () => {
+        const name = service.dataset.placeholder;
+        input.placeholder = "Enter " + name + " Link";
+        input.focus();
+        showStatus("✨ " + name + " downloader selected.");
+      });
+    });
+  </script>
+</body>
+</html>
