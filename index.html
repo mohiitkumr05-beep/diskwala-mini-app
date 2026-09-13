@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DiskWala Video Downloader</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#fff;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 10% 5%,rgba(140,50,255,.22),transparent 30%),radial-gradient(circle at 90% 15%,rgba(255,30,130,.2),transparent 30%),radial-gradient(circle at 50% 100%,rgba(0,170,255,.12),transparent 35%),#09090d}
+body:before{content:"";position:fixed;width:350px;height:350px;top:-150px;left:-120px;background:#9b3cff;filter:blur(130px);opacity:.18;border-radius:50%;pointer-events:none}
+body:after{content:"";position:fixed;width:350px;height:350px;right:-150px;bottom:-100px;background:#ff2975;filter:blur(130px);opacity:.16;border-radius:50%;pointer-events:none}
+.app{position:relative;z-index:1;width:100%;max-width:850px;min-height:100vh;margin:auto;padding:34px 22px 70px}
+.brand{text-align:center;margin-bottom:28px}
+.brand-icon{width:64px;height:64px;margin:auto;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:31px;background:linear-gradient(135deg,#8b35ff,#d633ff,#ff287c);box-shadow:0 0 30px rgba(181,55,255,.4),inset 0 1px 1px rgba(255,255,255,.35);animation:floating 3s ease-in-out infinite}
+.brand-title{margin-top:13px;font-size:21px;font-weight:800}
+.brand-subtitle{margin-top:5px;color:#8e8e9b;font-size:13px}
+.tabs-wrapper{display:flex;justify-content:center;gap:14px;margin:28px 0 38px}
+.tab{width:230px;max-width:46%;padding:16px 22px;border-radius:40px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.035);color:#a7a7b5;font-size:19px;font-weight:700;cursor:pointer;transition:.3s;backdrop-filter:blur(12px)}
+.tab.active{color:#fff;border:1px solid transparent;background:linear-gradient(135deg,#8737ff,#b82eff,#f03c9d);box-shadow:0 8px 28px rgba(157,50,255,.35),inset 0 1px 1px rgba(255,255,255,.3)}
+.hero{text-align:center;margin-bottom:30px}
+.hero h1{font-size:clamp(30px,7vw,52px);line-height:1.15;font-weight:900;letter-spacing:-1.5px}
+.gradient-text{background:linear-gradient(90deg,#933cff,#b735ff,#ed3ca5,#ff4770);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:250% auto;animation:gradientMove 5s linear infinite}
+.hero p{margin-top:10px;color:#858592;font-size:14px}
+.download-card{padding:7px;border-radius:22px;background:linear-gradient(135deg,rgba(148,50,255,.2),rgba(255,45,130,.1));border:1px solid rgba(255,255,255,.1);box-shadow:0 15px 50px rgba(0,0,0,.3);margin-bottom:32px}
+.input-row{display:flex;gap:10px}
+.url-input{flex:1;min-width:0;height:62px;border-radius:17px;border:1px solid rgba(255,255,255,.2);background:rgba(10,10,14,.9);color:#fff;padding:0 20px;font-size:18px;outline:none}
+.url-input::placeholder{color:#777782}
+@media(max-width:600px){.url-input{padding:0 22px;min-height:72px}.download-card{padding:8px}.input-row{gap:12px}}
+.url-input:focus{border-color:#a03cff;box-shadow:0 0 0 3px rgba(160,60,255,.12)}
+.download-btn{height:62px;padding:0 27px;border:0;border-radius:17px;background:linear-gradient(135deg,#fff,#e9e9ee);color:#111118;font-size:17px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.25s}
+.download-btn:active,.service-btn:active{transform:scale(.97)}
+.status{display:none;margin-top:13px;padding:13px 16px;border-radius:13px;text-align:center;font-size:14px;background:rgba(255,255,255,.05);color:#c9c9d4;border:1px solid rgba(255,255,255,.08)}
+.services{display:flex;flex-direction:column;gap:18px}
+.service-btn{position:relative;width:100%;min-height:78px;border:0;border-radius:45px;padding:13px 28px;display:flex;align-items:center;justify-content:center;gap:17px;color:#fff;font-size:clamp(17px,4vw,23px);font-weight:800;cursor:pointer;overflow:hidden;background:linear-gradient(100deg,#943dff,#c336df,#f13a9b,#ff414d);background-size:220% auto;box-shadow:0 10px 28px rgba(206,49,191,.22),inset 0 1px 1px rgba(255,255,255,.35);transition:.3s}
+.service-btn:hover{transform:translateY(-3px);background-position:100% center;box-shadow:0 16px 40px rgba(219,52,190,.35)}
+.service-btn:before{content:"";position:absolute;width:80px;height:180px;top:-50px;left:-100px;background:rgba(255,255,255,.25);transform:rotate(25deg);transition:left .6s}
+.service-btn:hover:before{left:110%}
+.service-icon{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.95);border-radius:9px;position:relative}
+.service-icon:after{content:"↓";font-size:20px;font-weight:900}
+.page{display:none}.page.active{display:block;animation:pageIn .35s ease}
+.footer{text-align:center;margin-top:45px;color:#555562;font-size:12px}.footer span{color:#9d46ff;font-weight:700}
+@keyframes gradientMove{0%{background-position:0 center}100%{background-position:250% center}}
+@keyframes floating{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.app{padding:25px 17px 55px}.brand{margin-bottom:23px}.brand-icon{width:57px;height:57px;font-size:27px}.tabs-wrapper{gap:10px;margin:22px 0 32px}.tab{padding:14px 12px;font-size:17px}.hero{margin-bottom:25px}.hero h1{font-size:31px}.hero p{font-size:13px}.input-row{flex-direction:column}.url-input,.download-btn{width:100%;height:58px}.url-input{font-size:16px}.download-card{padding:6px}.service-btn{min-height:73px;padding:12px 18px;gap:13px;font-size:17px}.service-icon{width:38px;height:38px;font-size:20px}}
+@media(max-width:380px){.hero h1{font-size:27px}.tab{font-size:15px;padding:13px 8px}.service-btn{font-size:15px;min-height:68px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="brand"><div class="brand-icon">⬇</div><div class="brand-title">DiskWala Downloader</div><div class="brand-subtitle">Fast • Simple • Powerful</div></div>
+
+<div class="tabs-wrapper">
+<button class="tab active" id="diskwalaTab" onclick="showPage('diskwala')">DiskWala</button>
+<button class="tab" id="teraboxTab" onclick="showPage('terabox')">TeraBox</button>
+</div>
+
+<div class="page active" id="diskwalaPage">
+<div class="hero"><h1><span>DiskWala </span><span class="gradient-text">Video Downloader</span></h1><p>Download your videos quickly and easily</p></div>
+<div class="download-card">
+<div class="input-row"><input id="urlInput" class="url-input" type="url" placeholder="Enter DiskWala Link" autocomplete="off" spellcheck="false"><button class="download-btn" onclick="downloadVideo()">Download</button></div>
+<div id="status" class="status"></div>
+</div>
+<div class="services">
+<button class="service-btn" onclick="openService('TeraBox')"><span class="service-icon"></span><span>Terabox Video Downloader</span></button>
+<button class="service-btn" onclick="openService('DropGalaxy')"><span class="service-icon"></span><span>Dropgalaxy Video Downloader</span></button>
+<button class="service-btn" onclick="openService('Vidbunker')"><span class="service-icon"></span><span>Vidbunker Video Downloader</span></button>
+<button class="service-btn" onclick="openService('Flezen')"><span class="service-icon"></span><span>Flezen Downloader</span></button>
+</div>
+</div>
+
+<div class="page" id="teraboxPage">
+<div class="hero"><h1><span>TeraBox </span><span class="gradient-text">Video Downloader</span></h1><p>Download TeraBox videos easily</p></div>
+<div class="download-card">
+<div class="input-row"><input id="teraboxInput" class="url-input" type="url" placeholder="Enter TeraBox Link" autocomplete="off" spellcheck="false"><button class="download-btn" onclick="downloadTeraBox()">Download</button></div>
+<div id="teraboxStatus" class="status"></div>
+</div>
+<div class="services"><button class="service-btn" onclick="downloadTeraBox()"><span class="service-icon"></span><span>TeraBox Video Downloader</span></button></div>
+</div>
+
+<div class="footer">Powered by <span>DiskWala</span></div>
+</div>
+
+<script>
+const tg=window.Telegram.WebApp;
+if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#09090d");tg.setBackgroundColor("#09090d")}catch(e){}}
+
+function showPage(page){
+const d=document.getElementById("diskwalaPage"),t=document.getElementById("teraboxPage"),dt=document.getElementById("diskwalaTab"),tt=document.getElementById("teraboxTab");
+if(page==="diskwala"){d.classList.add("active");t.classList.remove("active");dt.classList.add("active");tt.classList.remove("active")}
+else{t.classList.add("active");d.classList.remove("active");tt.classList.add("active");dt.classList.remove("active")}
+}
+function valid(v){try{new URL(v);return true}catch(e){return false}}
+function msg(el,text){el.style.display="block";el.textContent=text}
+function downloadVideo(){
+const i=document.getElementById("urlInput"),s=document.getElementById("status"),u=i.value.trim();
+if(!u)return msg(s,"⚠️ Please enter a DiskWala link.");
+if(!valid(u))return msg(s,"❌ Please enter a valid URL.");
+msg(s,"⏳ Processing your link...");
+setTimeout(()=>msg(s,"✅ Link received. Downloader backend will be connected next."),700);
+}
+function downloadTeraBox(){
+const i=document.getElementById("teraboxInput"),s=document.getElementById("teraboxStatus"),u=i.value.trim();
+if(!u)return msg(s,"⚠️ Please enter a TeraBox link.");
+if(!valid(u))return msg(s,"❌ Please enter a valid URL.");
+msg(s,"⏳ Processing TeraBox link...");
+setTimeout(()=>msg(s,"✅ Link received. TeraBox backend will be connected next."),700);
+}
+function openService(service){
+if(service==="TeraBox"){showPage("terabox");return}
+const i=document.getElementById("urlInput"),s=document.getElementById("status");
+msg(s,"🚀 "+service+" Downloader selected.");i.focus();
+}
+document.getElementById("urlInput").addEventListener("keydown",e=>{if(e.key==="Enter")downloadVideo()});
+document.getElementById("teraboxInput").addEventListener("keydown",e=>{if(e.key==="Enter")downloadTeraBox()});
+</script>
+</body>
+</html>
